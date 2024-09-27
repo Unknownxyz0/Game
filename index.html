@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Guessing Game</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-family: 'Arial', sans-serif;
+            background-color: #282c34;
+            color: white;
+            margin: 0;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        #wordDisplay {
+            font-size: 24px;
+            margin: 20px;
+        }
+        #input {
+            padding: 10px;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        #guessButton {
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #61dafb;
+            color: #282c34;
+            transition: background-color 0.3s;
+        }
+        #guessButton:hover {
+            background-color: #21a1f1;
+        }
+        #result {
+            font-size: 20px;
+            margin-top: 20px;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        #restartButton {
+            display: none;
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #ffcc00;
+            color: #282c34;
+            transition: background-color 0.3s;
+        }
+        #restartButton:hover {
+            background-color: #e6b800;
+        }
+        .dev-window {
+            position: absolute;
+            background: rgba(40, 44, 52, 0.9);
+            border: 1px solid #61dafb;
+            border-radius: 5px;
+            padding: 10px;
+            width: 300px;
+            z-index: 100;
+            cursor: move;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: opacity 0.3s, transform 0.3s;
+        }
+        .dev-window-header {
+            background: #61dafb;
+            color: #282c34;
+            padding: 5px;
+            cursor: move;
+            user-select: none;
+        }
+        .dev-window-content {
+            padding: 10px;
+            font-size: 14px;
+            max-height: 200px; 
+            overflow-y: auto; 
+        }
+        #hint {
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        #devWindowButton {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #ffcc00;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #devWindowButton:hover {
+            background-color: #e6b800;
+        }
+    </style>
+</head>
+<body>
+    <h1>Word Guessing Game!</h1>
+    <div id="wordDisplay">_ _ _ _ _</div>
+    <input type="text" id="input" placeholder="Guess a letter" maxlength="1" />
+    <button id="guessButton">Guess</button>
+    <div id="result"></div>
+    <button id="restartButton">Restart</button>
+    <div id="hint"></div>
+
+    <!-- Developer Console Window -->
+    <div id="consoleWindow" class="dev-window" style="top: 10px; left: 10px;">
+        <div class="dev-window-header">
+            Console Log
+            <button id="closeConsoleButton" style="float: right;">X</button>
+            <button id="minimizeConsoleButton" style="float: right; margin-right: 5px;">-</button>
+        </div>
+        <div id="consoleContent" class="dev-window-content"></div>
+    </div>
+
+    <!-- Next Word Selection Window -->
+    <div id="nextWordWindow" class="dev-window" style="top: 10px; right: 10px;">
+        <div class="dev-window-header">Next Word</div>
+        <div class="dev-window-content">
+            <select id="nextWordSelect"></select>
+            <button id="setNextWordButton">Set Next Word</button>
+        </div>
+    </div>
+
+    <button id="devWindowButton">Toggle Developer Window</button>
+
+    <script>
+        const words = [
+            'abacus', 'abandon', 'abandonment', 'ability', 'abnormal', 'abundance', 'abundant', 'academy', 
+            'accelerate', 'accept', 'access', 'accessible', 'accident', 'accomplish', 'accomplishment', 
+            'account', 'accurate', 'achievement', 'acquire', 'acquisition', 'active', 'activity', 
+            'adapt', 'addition', 'additional', 'address', 'advantage', 'adventure', 'advertisement', 
+            'advice', 'adviser', 'advocate', 'affect', 'affection', 'afford', 'afraid', 'against', 
+            'agency', 'agreement', 'agriculture', 'airplane', 'alarm', 'algebra', 'allegation', 
+            'analysis', 'analyze', 'ancient', 'animal', 'anniversary', 'anxiety', 'anxious', 'apology', 
+            'appliance', 'application', 'appoint', 'appointment', 'appreciate', 'approach', 'approve', 
+            'architecture', 'argue', 'argument', 'artificial', 'artist', 'assess', 'assessment', 
+            'associate', 'association', 'assume', 'athlete', 'attempt', 'attraction', 'attitude', 
+            'attract', 'audience', 'authority', 'automobile', 'balance', 'benefit', 'biology', 
+            'borrow', 'boundary', 'brilliant', 'brother', 'bubbling', 'calculation', 
+            'calendar', 'capacity', 'capital', 'captain', 'capture', 'carpet', 'carriage', 'casual', 
+            'celebrate', 'celebration', 'challenge', 'charity', 'charming', 'cheerful', 'children', 
+            'cigarette', 'circular', 'citizen', 'clarify', 'clarity', 'climate', 'collection', 
+            'collective', 'comment', 'communication', 'community', 'company', 'compete', 'competition', 
+            'complete', 'completion', 'complex', 'complicate', 'confident', 'confidence', 'conflict', 
+            'conform', 'connection', 'conscious', 'consequence', 'conservative', 'consider', 
+            'consistent', 'consumer', 'contact', 'contain', 'container', 'continue', 'contract', 
+            'contribute', 'conversation', 'convert', 'courage', 'creative', 'credit', 'crisis', 
+            'criticism', 'criticize', 'culture', 'curiosity', 'danger', 'decision', 'definition', 
+            'delight', 'demonstrate', 'develop', 'development', 'different', 'difficult', 
+            'disappoint', 'discovery', 'discussion', 'discuss', 'display', 'distance', 'distinct', 
+            'distribution', 'distrust', 'education', 'efficient', 'election', 'elegance', 
+            'emergency', 'emphasize', 'employee', 'employer', 'employment', 'encourage', 
+            'endanger', 'energy', 'engineer', 'enhance', 'environment', 'equality', 'equivalent', 
+            'estimate', 'evaluation', 'evidence', 'excellent', 'exercise', 'exhibit', 'expansion', 
+            'experience', 'experiment', 'explore', 'extension', 'facility', 'failure', 'fascinate', 
+            'favorite', 'feature', 'fiction', 'financial', 'flexible', 'fortunate', 'freedom', 
+            'friendly', 'function', 'fundamental', 'furniture', 'generation', 'government', 
+            'grateful', 'gravity', 'grocery', 'guarantee', 'happiness', 'healthy', 'helicopter', 
+            'historical', 'hockey', 'hospital', 'humorous', 'identity', 'imagination', 
+            'immigrate', 'importance', 'improve', 'influence', 'information', 'infrastructure', 
+            'initial', 'innovation', 'inspiration', 'instruct', 'instrument', 'integrate', 
+            'intelligent', 'interaction', 'interest', 'interior', 'invest', 'investigation', 
+            'journey', 'journal', 'judgment', 'justice', 'knowledge', 'language', 'laughter', 
+            'lifestyle', 'nihal', 'location', 'mathematics', 'mechanical', 'message', 
+            'microscope', 'modern', 'motivation', 'navigate', 'network', 'observation', 'obstacle', 
+            'operation', 'opportunity', 'organize', 'original', 'overcome', 'participate', 
+            'partner', 'performance', 'perspective', 'personal', 'physician', 'political', 
+            'potential', 'practice', 'predict', 'prepare', 'presentation', 'preservation', 
+            'president', 'previous', 'pride', 'priority', 'produce', 'product', 'professional', 
+            'progress', 'promotion', 'property', 'protect', 'publication', 'quality', 
+            'questionnaire', 'quote', 'reaction', 'realistic', 'recovery', 'reflection', 
+            'relationship', 'relevant', 'reliable', 'reminder', 'removal', 'represent', 
+            'reputation', 'require', 'research', 'response', 'responsibility', 'revolution', 
+            'satisfaction', 'schedule', 'scientific', 'secretary', 'selection', 'sensitive', 
+            'significant', 'solution', 'source', 'specialist', 'specific', 'statement', 
+            'strength', 'structure', 'substantial', 'success', 'suggestion', 'supply', 
+            'support', 'surprise', 'symbol', 'treatment', 'tropical', 'ultimate', 
+            'understand', 'universal', 'utilize', 'variation', 'vibration', 'vocabulary', 
+            'volunteer', 'vulnerable', 'apple', 'wonderful', 'yesterday','vaishvik','nihal','jhhjhjj'
+
+        ];
+        let selectedWord;
+        let guessedLetters = [];
+        let attempts = 10;
+        let incorrectGuesses = 0;
+        const hintWordsCount = 5;
+
+        const wordDisplay = document.getElementById('wordDisplay');
+        const input = document.getElementById('input');
+        const guessButton = document.getElementById('guessButton');
+        const resultDiv = document.getElementById('result');
+        const restartButton = document.getElementById('restartButton');
+        const hintDiv = document.getElementById('hint');
+        const consoleContent = document.getElementById('consoleContent');
+        const nextWordSelect = document.getElementById('nextWordSelect');
+        const setNextWordButton = document.getElementById('setNextWordButton');
+        const consoleWindow = document.getElementById('consoleWindow');
+        const nextWordWindow = document.getElementById('nextWordWindow');
+        const devWindowButton = document.getElementById('devWindowButton');
+        const closeConsoleButton = document.getElementById('closeConsoleButton');
+        const minimizeConsoleButton = document.getElementById('minimizeConsoleButton');
+
+        // Drag functionality
+        function makeDraggable(element) {
+            let offsetX, offsetY;
+
+            element.querySelector('.dev-window-header').addEventListener('mousedown', function (e) {
+                offsetX = e.clientX - element.getBoundingClientRect().left;
+                offsetY = e.clientY - element.getBoundingClientRect().top;
+                document.addEventListener('mousemove', mouseMoveHandler);
+                document.addEventListener('mouseup', mouseUpHandler);
+            });
+
+            function mouseMoveHandler(e) {
+                element.style.left = `${e.clientX - offsetX}px`;
+                element.style.top = `${e.clientY - offsetY}px`;
+            }
+
+            function mouseUpHandler() {
+                document.removeEventListener('mousemove', mouseMoveHandler);
+                document.removeEventListener('mouseup', mouseUpHandler);
+            }
+        }
+
+        makeDraggable(consoleWindow);
+        makeDraggable(nextWordWindow);
+
+        function startGame() {
+            selectedWord = words[Math.floor(Math.random() * words.length)];
+            guessedLetters = [];
+            attempts = 10;
+            incorrectGuesses = 0;
+            logToConsole(`Game started. Selected word: "${selectedWord}".`);
+
+            wordDisplay.innerText = getDisplayWord();
+            resultDiv.innerText = '';
+            resultDiv.style.opacity = 0;
+            restartButton.style.display = 'none';
+            hintDiv.style.opacity = 0;
+            guessButton.disabled = false; // Enable guess button
+        }
+
+        function getDisplayWord() {
+            return selectedWord.split('').map(letter => (guessedLetters.includes(letter) ? letter : '_')).join(' ');
+        }
+
+        function provideHint() {
+            const hintWords = [selectedWord];
+            while (hintWords.length < hintWordsCount) {
+                const randomWord = words[Math.floor(Math.random() * words.length)];
+                if (!hintWords.includes(randomWord)) {
+                    hintWords.push(randomWord);
+                }
+            }
+            hintWords.sort(() => Math.random() - 0.5);
+            hintDiv.innerText = `Hint: ${hintWords.join(', ')}`;
+            hintDiv.style.opacity = 1;
+            logToConsole(`Hint provided: ${hintWords.join(', ')}`);
+        }
+
+        function logToConsole(message) {
+            const logEntry = document.createElement('div');
+            logEntry.innerText = message;
+            consoleContent.appendChild(logEntry);
+            consoleContent.scrollTop = consoleContent.scrollHeight;
+        }
+
+        input.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                guessButton.click();
+            }
+        });
+
+        guessButton.addEventListener('click', () => {
+            const guess = input.value.toLowerCase();
+            input.value = '';
+
+            if (guess && /^[a-z]$/.test(guess) && !guessedLetters.includes(guess)) {
+                guessedLetters.push(guess);
+                logToConsole(`Player guessed: "${guess}".`);
+
+                if (!selectedWord.includes(guess)) {
+                    attempts--;
+                    incorrectGuesses++;
+                    logToConsole(`Incorrect guess. Attempts left: ${attempts}. Incorrect guesses: ${incorrectGuesses}.`);
+                }
+
+                wordDisplay.innerText = getDisplayWord();
+                logToConsole(`Current word display: "${wordDisplay.innerText}".`);
+
+                if (attempts <= 0) {
+                    resultDiv.innerText = `Game Over! The word was "${selectedWord}".`;
+                    resultDiv.style.opacity = 1;
+                    guessButton.disabled = true; // Disable guess button on game over
+                    restartButton.style.display = 'block';
+                } else if (!wordDisplay.innerText.includes('_')) {
+                    resultDiv.innerText = `Congratulations! You've guessed the word "${selectedWord}"!`;
+                    resultDiv.style.opacity = 1;
+                    guessButton.disabled = true; // Disable guess button on win
+                    restartButton.style.display = 'block';
+                }
+
+                if (incorrectGuesses >= 9) {
+                    provideHint();
+                }
+            } else {
+                logToConsole(`Invalid guess: "${guess}".`);
+            }
+        });
+
+        restartButton.addEventListener('click', startGame);
+
+        // Fill nextWordSelect with words
+        words.forEach(word => {
+            const option = document.createElement('option');
+            option.value = word;
+            option.text = word;
+            nextWordSelect.appendChild(option);
+        });
+
+        setNextWordButton.addEventListener('click', () => {
+            selectedWord = nextWordSelect.value;
+            guessedLetters = [];
+            attempts = 10;
+            incorrectGuesses = 0;
+            logToConsole(`Next word set: "${selectedWord}".`);
+            wordDisplay.innerText = getDisplayWord(); // Update display with new word
+            resultDiv.innerText = '';
+            resultDiv.style.opacity = 0;
+            hintDiv.style.opacity = 0; // Reset hint
+            guessButton.disabled = false; // Enable guess button
+        });
+
+        let devWindowsVisible = false;
+        devWindowButton.addEventListener('click', () => {
+            devWindowsVisible = !devWindowsVisible;
+            consoleWindow.style.opacity = devWindowsVisible ? 1 : 0;
+            consoleWindow.style.transform = devWindowsVisible ? 'translateY(0)' : 'translateY(-20px)';
+            nextWordWindow.style.opacity = devWindowsVisible ? 1 : 0;
+            nextWordWindow.style.transform = devWindowsVisible ? 'translateY(0)' : 'translateY(-20px)';
+        });
+
+        closeConsoleButton.addEventListener('click', () => {
+            consoleWindow.style.display = 'none';
+        });
+
+        minimizeConsoleButton.addEventListener('click', () => {
+            const isVisible = consoleContent.style.display !== 'none';
+            consoleContent.style.display = isVisible ? 'none' : 'block';
+            minimizeConsoleButton.innerText = isVisible ? '▲' : '−';
+        });
+
+        // Start the game
+        startGame();
+    </script>
+</body>
+</html>
