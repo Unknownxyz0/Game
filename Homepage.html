@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ElementalMobs || Home</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #333; /* Default dark mode */
+            color: #fff;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: 0; /* Remove default margin */
+        }
+        h1 {
+            font-size: 2em; /* Adjust title size for better mobile visibility */
+            margin-bottom: 20px; /* Space between title and button */
+        }
+        #play-start {
+            padding: 15px 30px; /* More comfortable padding for mobile */
+            font-size: 1.2em; /* Slightly smaller font size for mobile */
+            color: #fff;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: 80%; /* Button width for better tap target */
+            max-width: 300px; /* Limit maximum button width */
+        }
+        #play-start:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <h1>Card Battle</h1>
+    <div id="play-start" onclick="startGame()">Start Game</div>
+
+    <script>
+        function startGame() {
+            // Redirect to loading page
+            window.location.href = "loading.html";
+        }
+    </script>
+</body>
+</html>

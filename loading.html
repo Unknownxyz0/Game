@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading...</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #333;
+            color: #fff;
+            font-size: 2em;
+            margin: 0; /* Remove default margin */
+            padding: 20px; /* Add padding for smaller screens */
+            box-sizing: border-box; /* Include padding in height calculation */
+        }
+        div {
+            text-align: center; /* Center text */
+        }
+    </style>
+</head>
+<body>
+    <div>Loading... Please wait.</div>
+
+    <script>
+        // Redirect to the game page after 5 seconds
+        setTimeout(() => {
+            window.location.href = "Game.html"; // Change this to the actual name of your game HTML file
+        }, 5000);
+    </script>
+</body>
+</html>

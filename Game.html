@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ElementalMobs || Play</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #333;
+            color: #fff;
+            margin: 0; /* Remove default margin */
+            padding: 20px; /* Add padding for smaller screens */
+            box-sizing: border-box; /* Include padding in height calculation */
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        #cards {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .card {
+            display: inline-block;
+            margin: 10px;
+            padding: 20px;
+            border: 2px solid #444;
+            border-radius: 8px;
+            background-color: #555;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+            text-align: center;
+            flex: 1 1 100px; /* Flex properties for responsiveness */
+            max-width: 150px; /* Maximum width for cards */
+        }
+        .card:hover {
+            transform: scale(1.05);
+            background-color: #666;
+        }
+        .selected {
+            background-color: #90ee90;
+            border-color: #4caf50;
+        }
+        #battleArena {
+            display: none;
+            text-align: center;
+        }
+        #hpDisplay {
+            margin-bottom: 20px;
+        }
+        #battleLog {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: calc(100% - 40px); /* Responsive width */
+            max-width: 300px; /* Maximum width */
+            height: 300px;
+            overflow-y: scroll;
+            background-color: rgba(50, 50, 50, 0.9);
+            border: 1px solid #444;
+            border-radius: 10px;
+            padding: 10px;
+            z-index: 10;
+        }
+        .attack-button {
+            display: inline-block;
+            margin: 5px;
+            padding: 10px 15px;
+            background-color: #444;
+            border: 1px solid #666;
+            border-radius: 5px;
+            color: white;
+            font-size: 16px;
+            text-align: center;
+            transition: background-color 0.3s, transform 0.3s;
+            cursor: pointer;
+            flex: 1 1 80px; /* Flex properties for buttons */
+            max-width: 120px; /* Maximum width for buttons */
+        }
+        .attack-button:hover {
+            background-color: #666;
+            transform: scale(1.05);
+        }
+        .draggable {
+            cursor: move;
+        }
+    </style>
+</head>
+<body>
+    <h1>Card Battle Arena</h1>
+    <h2>Select 2 Cards</h2>
+    <div id="cards">
+        <div class="card" onclick="selectCard('Spider')">Spider</div>
+        <div class="card" onclick="selectCard('Skeleton')">Skeleton</div>
+        <div class="card" onclick="selectCard('Creeper')">Creeper</div>
+        <div class="card" onclick="selectCard('Enderman')">Enderman</div>
+        <div class="card" onclick="selectCard('Warden')">Warden</div>
+        <div class="card" onclick="selectCard('Enderdragon')">Enderdragon</div>
+        <div class="card" onclick="selectCard('Wolf')">Wolf</div>
+    </div>
+    <button id="battleBtn" style="display:none;" onclick="startBattle()">Start Battle</button>
+    
+    <div id="battleArena">
+        <h2>Battle Arena</h2>
+        <div id="hpDisplay"></div>
+        <div id="actions"></div>
+        <div id="battleLog" class="draggable" onmousedown="initDrag(event)">Battle Log</div>
+        <div id="result" style="display:none;"></div>
+    </div>
+
+    <script>
+        let selectedCards = [];
+        let aiCards = [];
+        let playerHP = 200;
+        let aiHP = 200;
+        let cooldowns = {}; // Object to store cooldowns for abilities
+
+        const attacks = {
+            'Spider': ['Web:20', 'Pain:15', 'PowerfulFist:25', 'Blind:10'],
+            'Skeleton': ['Arrow:20', 'Headshot:30', 'Aimbot:40', 'Flamethrower:25'],
+            'Creeper': ['Explosion:40', 'Nuke:60', 'Regen:0', 'CreeperDomain:25'],
+            'Enderman': ['Jumpscare:30', 'Teleport:0', 'EndermanDomain:35'],
+            'Warden': ['SonicWaves:30', 'WardenDomain:40', 'TrueForm:50', 'Stomped:30'],
+            'Enderdragon': ['EnderDomain:50', 'SuperRegen:0', 'Transform:40'],
+            'Wolf': ['BestFriend:20', 'M1:15', 'Weakness:30', 'Strength:40']
+        };
+
+        function selectCard(card) {
+            if (selectedCards.length < 2) {
+                selectedCards.push(card);
+                document.querySelectorAll('.card').forEach(el => {
+                    if (el.textContent === card) {
+                        el.classList.add('selected');
+                    }
+                });
+            }
+            if (selectedCards.length === 2) {
+                document.getElementById('battleBtn').style.display = 'block';
+            }
+        }
+
+        function startBattle() {
+            const allCards = ['Spider', 'Skeleton', 'Creeper', 'Enderman', 'Warden', 'Enderdragon', 'Wolf'];
+
+            while (aiCards.length < 2) {
+                const randomCard = allCards[Math.floor(Math.random() * allCards.length)];
+                if (!aiCards.includes(randomCard)) {
+                    aiCards.push(randomCard);
+                }
+            }
+
+            document.getElementById('cards').style.display = 'none';
+            document.getElementById('battleBtn').style.display = 'none';
+            document.getElementById('battleArena').style.display = 'block';
+
+            updateHPDisplay();
+            displayActions();
+        }
+
+        function updateHPDisplay() {
+            document.getElementById('hpDisplay').innerHTML = `Your HP: ${playerHP} | AI HP: ${aiHP}`;
+        }
+
+        function displayActions() {
+            const actionsDiv = document.getElementById('actions');
+            actionsDiv.innerHTML = '';
+            selectedCards.forEach(card => {
+                actionsDiv.innerHTML += `<h3>${card} Attacks:</h3>`;
+                attacks[card].forEach(attack => {
+                    const [attackName, damage] = attack.split(':');
+                    // Add cooldown check
+                    if (!cooldowns[attackName]) {
+                        actionsDiv.innerHTML += `<div class="attack-button" onclick="playerAttack('${attackName}', ${damage})">${attackName}</div>`;
+                    } else {
+                        actionsDiv.innerHTML += `<div class="attack-button" style="opacity: 0.5;" title="Cooldown"> ${attackName} (Cooldown)</div>`;
+                    }
+                });
+            });
+        }
+
+        function playerAttack(attackName, damage) {
+            // Set cooldown for this attack
+            cooldowns[attackName] = true;
+            setTimeout(() => {
+                cooldowns[attackName] = false; // Reset cooldown after 3 seconds
+                displayActions(); // Refresh actions display
+            }, 3000); // 3 seconds cooldown
+
+            aiHP -= parseInt(damage);
+            logBattle(`You used ${attackName}! It dealt ${damage} damage!`);
+            checkBattleOutcome();
+            if (aiHP > 0) {
+                setTimeout(aiAttack, 1000); // Delay AI attack by 1 second
+            }
+        }
+
+        function aiAttack() {
+            const randomCard = aiCards[Math.floor(Math.random() * aiCards.length)];
+            const randomAttack = attacks[randomCard][Math.floor(Math.random() * attacks[randomCard].length)];
+            const [attackName, baseDamage] = randomAttack.split(':');
+            
+            // Calculate AI damage based on HP
+            let damage = parseInt(baseDamage);
+            if (aiHP <= 100) {
+                damage *= 2; // Double damage if HP is 100 or less
+            }
+            if (aiHP <= 50) {
+                damage *= 3; // Triple damage if HP is 50 or less
+            }
+
+            playerHP -= damage;
+            logBattle(`AI ${randomCard} used ${attackName}! It dealt ${damage} damage!`);
+            checkBattleOutcome();
+        }
+
+        function logBattle(message) {
+            const logDiv = document.getElementById('battleLog');
+            logDiv.innerHTML += `<p>${message}</p>`;
+            logDiv.scrollTop = logDiv.scrollHeight; // Scroll to the bottom
+            updateHPDisplay();
+        }
+
+        function checkBattleOutcome() {
+            if (playerHP <= 0) {
+                alert('You have been defeated! Game over.');
+                resetGame();
+            } else if (aiHP <= 0) {
+                alert('You defeated the AI! Congratulations!');
+                resetGame();
+            }
+        }
+
+         function resetGame() {
+              selectedCards = [];
+              aiCards = [];
+              playerHP = 200;
+              aiHP = 200;
+              cooldowns = {}; // Reset cooldowns
+              document.getElementById('cards').style.display = 'block';
+              document.getElementById('battleArena').style.display = 'none';
+              document.getElementById('battleLog').innerHTML = '';
+              document.getElementById('result').innerHTML = '';
+              document.getElementById('result').style.display = 'none';
+              document.getElementById('battleBtn').style.display = 'none';
+        }
+
+       // Dragging functionality for the battle log
+        let isDragging = false;
+        let offset = { x: 0, y: 0 };
+
+        function initDrag(e) {
+            isDragging = true;
+            offset.x = e.clientX - e.target.getBoundingClientRect().left;
+            offset.y = e.clientY - e.target.getBoundingClientRect().top;
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', stopDrag);
+        }
+
+        function drag(e) {
+            if (isDragging) {
+                const logDiv = document.getElementById('battleLog');
+                logDiv.style.left = e.clientX - offset.x + 'px';
+                logDiv.style.top = e.clientY - offset.y + 'px';
+            }
+        }
+
+        function stopDrag() {
+            isDragging = false;
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('mouseup', stopDrag);
+        }
+    </script>
+</body>
+</html>
